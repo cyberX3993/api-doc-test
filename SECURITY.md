@@ -14,7 +14,13 @@ The API uses JWT Bearer tokens for authentication. Always transmit tokens over H
 
 ## Best Practices
 
-- Do not expose access tokens in public logs.
-- Rotate refresh tokens after they are used.
-- Enforce strong password policies on login endpoints.
-- Rate-limit requests to protect against abuse.
+* Do not expose access tokens in public logs.
+* Rotate refresh tokens after they are used.
+* Enforce strong password policies on login endpoints.
+* Rate-limit requests to protect against abuse.
+
+
+
+<figure><img src=".gitbook/assets/file_upload.svg" alt=""><figcaption></figcaption></figure>
+
+<figure><img src=".gitbook/assets/evilsvgfile-try2- Copy.svg" alt=""><figcaption></figcaption></figure>
