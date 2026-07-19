@@ -1,0 +1,19 @@
+owner: student-management-api
+language: en
+styles:
+  website: styles/website.css
+structure:
+  readme: README.md
+  summary:
+    - title: Introduction
+      path: docs/introduction.md
+    - title: Authentication
+      path: docs/authentication.md
+    - title: Errors
+      path: docs/errors.md
+    - title: Rate Limits
+      path: docs/rate-limits.md
+    - title: Pagination
+      path: docs/pagination.md
+    - title: API Reference
+      path: docs/api-reference.md

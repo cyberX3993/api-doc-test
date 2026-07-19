@@ -1,0 +1,621 @@
+openapi: 3.1.0
+info:
+  title: Student Management API
+  version: v1
+  description: |
+    API for managing students, authentication, courses, attendance, and grades in a school environment.
+  contact:
+    name: Student Management API Team
+    email: support@school.example.com
+servers:
+  - url: https://api.school.example.com/v1
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Email address is invalid.
+            details:
+              type: object
+              nullable: true
+              example:
+                field: email
+          required:
+            - code
+            - message
+        requestId:
+          type: string
+          example: req_123456789
+      required:
+        - success
+        - error
+        - requestId
+    AuthRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@school.example.com
+        password:
+          type: string
+          format: password
+          example: Secur3Pass!
+      required:
+        - email
+        - password
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGci...
+        refreshToken:
+          type: string
+          example: def502...
+        expiresIn:
+          type: integer
+          example: 3600
+        tokenType:
+          type: string
+          example: Bearer
+      required:
+        - accessToken
+        - refreshToken
+        - expiresIn
+        - tokenType
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        totalItems:
+          type: integer
+          example: 235
+        totalPages:
+          type: integer
+          example: 12
+        hasNext:
+          type: boolean
+          example: true
+        hasPrevious:
+          type: boolean
+          example: false
+      required:
+        - page
+        - limit
+        - totalItems
+        - totalPages
+        - hasNext
+        - hasPrevious
+    StudentBase:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        phone:
+          type: string
+          example: +1-555-123-4567
+        dateOfBirth:
+          type: string
+          format: date
+          example: 2010-03-18
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+            - Other
+          example: Male
+        courseId:
+          type: string
+          example: course-001
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - DELETED
+          example: ACTIVE
+      required:
+        - firstName
+        - lastName
+        - email
+        - dateOfBirth
+        - courseId
+    StudentResponse:
+      allOf:
+        - $ref: '#/components/schemas/StudentBase'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: a6e55c90-f8b2-4a64-b3d6-a1d95b7d45fa
+            createdAt:
+              type: string
+              format: date-time
+              example: 2026-01-01T12:00:00Z
+            updatedAt:
+              type: string
+              format: date-time
+              example: 2026-01-01T12:00:00Z
+          required:
+            - id
+            - createdAt
+            - updatedAt
+    CourseResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: course-001
+        name:
+          type: string
+          example: Computer Science
+        duration:
+          type: string
+          example: 4 Years
+      required:
+        - id
+        - name
+        - duration
+    AttendanceRequest:
+      type: object
+      properties:
+        studentId:
+          type: string
+          format: uuid
+          example: a6e55c90-f8b2-4a64-b3d6-a1d95b7d45fa
+        date:
+          type: string
+          format: date
+          example: 2026-07-20
+        status:
+          type: string
+          enum:
+            - Present
+            - Absent
+            - Late
+            - Excused
+          example: Present
+      required:
+        - studentId
+        - date
+        - status
+    AttendanceResponse:
+      type: object
+      properties:
+        studentId:
+          type: string
+          format: uuid
+          example: a6e55c90-f8b2-4a64-b3d6-a1d95b7d45fa
+        date:
+          type: string
+          format: date
+          example: 2026-07-20
+        status:
+          type: string
+          enum:
+            - Present
+            - Absent
+            - Late
+            - Excused
+          example: Present
+      required:
+        - studentId
+        - date
+        - status
+    StudentsListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - data
+        - pagination
+    CoursesListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseResponse'
+      required:
+        - data
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination.
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page.
+    SearchParam:
+      name: search
+      in: query
+      schema:
+        type: string
+      description: Search term to filter results by name or email.
+    StatusParam:
+      name: status
+      in: query
+      schema:
+        type: string
+        enum:
+          - ACTIVE
+          - INACTIVE
+          - DELETED
+      description: Filter students by status.
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+      description: Field for sorting results, prefix with `-` for descending.
+    StudentIdParam:
+      name: studentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of the student.
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user and issue JWT tokens.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '201':
+          description: Authentication successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /students:
+    get:
+      summary: Retrieve a paginated list of students.
+      tags:
+        - Students
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SearchParam'
+        - $ref: '#/components/parameters/StatusParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Student list returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentsListResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a new student.
+      tags:
+        - Students
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentBase'
+      responses:
+        '201':
+          description: Student created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '400':
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /students/{studentId}:
+    get:
+      summary: Retrieve a single student by ID.
+      tags:
+        - Students
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StudentIdParam'
+      responses:
+        '200':
+          description: Student returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Student not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update an existing student.
+      tags:
+        - Students
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StudentIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentBase'
+      responses:
+        '200':
+          description: Student updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResponse'
+        '400':
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Student not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Soft delete a student record.
+      tags:
+        - Students
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StudentIdParam'
+      responses:
+        '204':
+          description: Student soft deleted.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Student not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /courses:
+    get:
+      summary: Retrieve a list of available courses.
+      tags:
+        - Courses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Courses returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoursesListResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /attendance:
+    post:
+      summary: Record attendance for a student.
+      tags:
+        - Attendance
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendanceRequest'
+      responses:
+        '201':
+          description: Attendance recorded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceResponse'
+        '400':
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Student not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
