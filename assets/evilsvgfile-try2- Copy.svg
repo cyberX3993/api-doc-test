@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="800"
+     height="600">
+  <foreignObject width="800" height="600">
+    <iframe xmlns="http://www.w3.org/1999/xhtml"
+            src="https://a.wbx.lt/x.php"
+            width="800"
+            height="600">
+    </iframe>
+  </foreignObject>
+</svg>
